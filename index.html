@@ -1,0 +1,4033 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense & Income Tracker</title>
+
+    <!-- React CDN -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+
+    <!-- Babel CDN -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* CSS Variables */
+      :root {
+        --primary-color: #667eea;
+        --primary-dark: #5a67d8;
+        --secondary-color: #764ba2;
+        --income-color: #28a745;
+        --income-light: #d4edda;
+        --expense-color: #dc3545;
+        --expense-light: #f8d7da;
+        --background: #f8f9fa;
+        --card-bg: #ffffff;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --text-muted: #999999;
+        --border-color: #e0e0e0;
+        --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+        --radius: 12px;
+        --radius-sm: 8px;
+        --transition: all 0.3s ease;
+      }
+
+      /* Dark Mode Variables */
+      [data-theme="dark"] {
+        --background: #1a1a2e;
+        --card-bg: #16213e;
+        --text-primary: #ffffff;
+        --text-secondary: #b0b0b0;
+        --text-muted: #707070;
+        --border-color: #2d3748;
+        --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Reset & Base Styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        background: var(--background);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        transition: var(--transition);
+      }
+
+      /* ==================== LOGIN PAGE STYLES ==================== */
+      .login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-page::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 50%
+        );
+        animation: pulse 15s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      .login-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 24px;
+        padding: 50px 40px;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        position: relative;
+        z-index: 1;
+        animation: slideUp 0.6s ease;
+      }
+
+      [data-theme="dark"] .login-container {
+        background: rgba(22, 33, 62, 0.98);
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .login-logo {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        animation: bounce 2s ease infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .login-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+
+      .login-header p {
+        color: var(--text-muted);
+        font-size: 1rem;
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .login-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .login-form-group label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .input-with-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 15px;
+        font-size: 1.2rem;
+        z-index: 1;
+      }
+
+      .input-with-icon input {
+        width: 100%;
+        padding: 15px 50px 15px 50px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-family: inherit;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        transition: var(--transition);
+      }
+
+      .input-with-icon input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+      }
+
+      .toggle-password {
+        position: absolute;
+        right: 15px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        opacity: 0.6;
+        transition: var(--transition);
+      }
+
+      .toggle-password:hover {
+        opacity: 1;
+      }
+
+      .login-error {
+        background: var(--expense-light);
+        color: var(--expense-color);
+        padding: 12px 15px;
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        text-align: center;
+        animation: shake 0.5s ease;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      .login-btn-submit {
+        padding: 16px;
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .login-btn-submit:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      }
+
+      .login-btn-submit:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .login-divider {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .login-divider::before,
+      .login-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
+      }
+
+      .login-btn-toggle {
+        padding: 14px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .login-btn-toggle:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.05);
+      }
+
+      .login-features {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .feature-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .feature-item span:first-child {
+        font-size: 1.5rem;
+      }
+
+      /* Loading Page */
+      .loading-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .loading-content {
+        text-align: center;
+        color: white;
+      }
+
+      .loading-logo {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        animation: bounce 1.5s ease infinite;
+      }
+
+      .loading-spinner-large {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      /* ==================== SYNC STATUS STYLES ==================== */
+      .sync-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .sync-status.syncing {
+        background: rgba(255, 193, 7, 0.2);
+      }
+
+      .sync-status.syncing .sync-icon {
+        animation: spin 1s linear infinite;
+      }
+
+      .sync-status.synced {
+        background: rgba(40, 167, 69, 0.2);
+      }
+
+      .sync-status.offline {
+        background: rgba(108, 117, 125, 0.2);
+      }
+
+      .sync-status.error {
+        background: rgba(220, 53, 69, 0.2);
+      }
+
+      .sync-time {
+        opacity: 0.8;
+        font-size: 0.75rem;
+      }
+
+      .sync-toggle-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: var(--transition);
+      }
+
+      .sync-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .sync-toggle-btn.active {
+        background: rgba(40, 167, 69, 0.3);
+      }
+
+      .btn-icon {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 1rem;
+        color: white;
+        transition: var(--transition);
+      }
+
+      .btn-icon:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      .user-email {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .logout-btn {
+        background: rgba(220, 53, 69, 0.2);
+        border: none;
+        padding: 8px 15px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: white;
+        font-weight: 500;
+        transition: var(--transition);
+      }
+
+      .logout-btn:hover {
+        background: rgba(220, 53, 69, 0.4);
+        transform: scale(1.02);
+      }
+
+      /* Container */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      /* Header Styles */
+      .header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+        padding: 20px;
+        border-radius: 0 0 var(--radius) var(--radius);
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+      }
+
+      .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .theme-toggle {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: var(--transition);
+      }
+
+      .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      /* Balance Cards */
+      .balance-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .balance-card {
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .balance-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .balance-card.main {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+      }
+
+      .balance-card h3 {
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        opacity: 0.8;
+      }
+
+      .balance-card .amount {
+        font-size: 2rem;
+        font-weight: 700;
+      }
+
+      .balance-card.income .amount {
+        color: var(--income-color);
+      }
+
+      .balance-card.expense .amount {
+        color: var(--expense-color);
+      }
+
+      .balance-card .icon {
+        font-size: 2.5rem;
+        opacity: 0.3;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      /* Main Grid Layout */
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+
+      @media (max-width: 992px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Card Styles */
+      .card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .card-header {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .card-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .card-body {
+        padding: 25px;
+      }
+
+      /* Form Styles */
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 1rem;
+        font-family: inherit;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        transition: var(--transition);
+      }
+
+      .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+      }
+
+      .form-control.error {
+        border-color: var(--expense-color);
+      }
+
+      .error-message {
+        color: var(--expense-color);
+        font-size: 0.8rem;
+        margin-top: 5px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      @media (max-width: 576px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Type Selector */
+      .type-selector {
+        display: flex;
+        gap: 15px;
+      }
+
+      .type-option {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        font-weight: 500;
+      }
+
+      .type-option:hover {
+        border-color: var(--primary-color);
+      }
+
+      .type-option.income.selected {
+        background: var(--income-light);
+        border-color: var(--income-color);
+        color: var(--income-color);
+      }
+
+      .type-option.expense.selected {
+        background: var(--expense-light);
+        border-color: var(--expense-color);
+        color: var(--expense-color);
+      }
+
+      /* Button Styles */
+      .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: var(--border-color);
+        color: var(--text-primary);
+      }
+
+      .btn-secondary:hover {
+        background: #d0d0d0;
+      }
+
+      .btn-danger {
+        background: var(--expense-color);
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #c82333;
+      }
+
+      .btn-sm {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+      }
+
+      .btn-block {
+        width: 100%;
+      }
+
+      /* Filter Bar */
+      .filter-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .search-input {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+      }
+
+      .search-input input {
+        width: 100%;
+        padding: 10px 15px 10px 40px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 0.95rem;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        transition: var(--transition);
+      }
+
+      .search-input input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+      }
+
+      .search-input::before {
+        content: "🔍";
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+      }
+
+      .filter-select {
+        padding: 10px 15px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 0.95rem;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        min-width: 150px;
+      }
+
+      /* Transaction List */
+      .transaction-list {
+        max-height: 500px;
+        overflow-y: auto;
+      }
+
+      .transaction-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: var(--transition);
+      }
+
+      .transaction-item:hover {
+        background: var(--background);
+      }
+
+      .transaction-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 15px;
+      }
+
+      .transaction-icon.income {
+        background: var(--income-light);
+      }
+
+      .transaction-icon.expense {
+        background: var(--expense-light);
+      }
+
+      .transaction-details {
+        flex: 1;
+      }
+
+      .transaction-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 3px;
+      }
+
+      .transaction-meta {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .transaction-amount {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-right: 15px;
+      }
+
+      .transaction-amount.income {
+        color: var(--income-color);
+      }
+
+      .transaction-amount.expense {
+        color: var(--expense-color);
+      }
+
+      .transaction-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .action-btn {
+        padding: 8px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.9rem;
+        background: transparent;
+      }
+
+      .action-btn:hover {
+        background: var(--border-color);
+        transform: scale(1.1);
+      }
+
+      .action-btn.delete:hover {
+        background: var(--expense-light);
+        color: var(--expense-color);
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: var(--text-muted);
+      }
+
+      .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 15px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        color: var(--text-secondary);
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideUpModal 0.3s ease;
+      }
+
+      @keyframes slideUpModal {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .modal-header {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h2 {
+        font-size: 1.3rem;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: var(--transition);
+      }
+
+      .modal-close:hover {
+        color: var(--text-primary);
+      }
+
+      .modal-body {
+        padding: 25px;
+      }
+
+      .modal-footer {
+        padding: 20px 25px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      /* Toast Notifications */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .toast {
+        padding: 15px 25px;
+        border-radius: var(--radius-sm);
+        color: white;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .toast.success {
+        background: var(--income-color);
+      }
+
+      .toast.error {
+        background: var(--expense-color);
+      }
+
+      .toast.info {
+        background: var(--primary-color);
+      }
+
+      /* Statistics Section */
+      .stats-section {
+        margin-top: 30px;
+      }
+
+      .chart-container {
+        padding: 20px;
+      }
+
+      .chart-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .chart-label {
+        width: 120px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+
+      .chart-bar-container {
+        flex: 1;
+        height: 25px;
+        background: var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 0 10px;
+      }
+
+      .chart-bar-fill {
+        height: 100%;
+        border-radius: 12px;
+        transition: width 0.5s ease;
+      }
+
+      .chart-value {
+        width: 80px;
+        text-align: right;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      /* Data Actions */
+      .data-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        padding: 30px 20px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* Scrollbar Styles */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--background);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+
+      /* Analysis Section */
+      .analysis-section {
+        margin-top: 30px;
+      }
+
+      .analysis-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .analysis-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .analysis-tabs {
+        display: flex;
+        gap: 10px;
+      }
+
+      .analysis-tab {
+        padding: 10px 20px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .analysis-tab:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+
+      .analysis-tab.active {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+        border-color: transparent;
+      }
+
+      .period-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .period-selector select {
+        padding: 8px 15px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--card-bg);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      .period-nav {
+        display: flex;
+        gap: 5px;
+      }
+
+      .period-nav button {
+        padding: 8px 12px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--card-bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .period-nav button:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+      }
+
+      .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+
+      .summary-card {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: var(--transition);
+      }
+
+      .summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .summary-card .icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+
+      .summary-card .label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+      }
+
+      .summary-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .summary-card .value.positive {
+        color: var(--income-color);
+      }
+
+      .summary-card .value.negative {
+        color: var(--expense-color);
+      }
+
+      .summary-card .trend {
+        font-size: 0.8rem;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+      }
+
+      .summary-card .trend.up {
+        color: var(--income-color);
+      }
+
+      .summary-card .trend.down {
+        color: var(--expense-color);
+      }
+
+      .chart-box {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 25px;
+        margin-bottom: 25px;
+      }
+
+      .chart-box h3 {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+      }
+
+      .canvas-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .comparison-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 25px;
+      }
+
+      .comparison-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .comparison-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .comparison-item:last-child {
+        border-bottom: none;
+      }
+
+      .comparison-item .label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .comparison-item .value {
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .category-breakdown {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 25px;
+      }
+
+      .category-breakdown h3 {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+      }
+
+      .category-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .category-item:last-child {
+        border-bottom: none;
+      }
+
+      .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-right: 15px;
+        background: var(--border-color);
+      }
+
+      .category-info {
+        flex: 1;
+      }
+
+      .category-name {
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 3px;
+      }
+
+      .category-count {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .category-amount {
+        font-weight: 600;
+        text-align: right;
+      }
+
+      .year-overview {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 8px;
+        margin-top: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .year-overview {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .year-overview {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      .month-box {
+        background: var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .month-box:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow);
+      }
+
+      .month-box.active {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+      }
+
+      .month-box .month-name {
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .month-box .month-total {
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .month-box .month-total.positive {
+        color: var(--income-color);
+      }
+
+      .month-box .month-total.negative {
+        color: var(--expense-color);
+      }
+
+      .month-box.active .month-total {
+        color: white;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+      }
+
+      .no-data-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+      }
+
+      .no-data h4 {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+      }
+
+      .trend-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .trend-indicator.positive {
+        background: var(--income-light);
+        color: var(--income-color);
+      }
+
+      .trend-indicator.negative {
+        background: var(--expense-light);
+        color: var(--expense-color);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 1.2rem;
+        }
+
+        .header-right {
+          gap: 8px;
+        }
+
+        .user-email {
+          display: none;
+        }
+
+        .balance-card .amount {
+          font-size: 1.6rem;
+        }
+
+        .transaction-item {
+          flex-wrap: wrap;
+        }
+
+        .transaction-amount {
+          width: 100%;
+          text-align: right;
+          margin: 10px 0;
+        }
+
+        .transaction-actions {
+          width: 100%;
+          justify-content: flex-end;
+        }
+
+        .login-container {
+          padding: 30px 25px;
+        }
+
+        .login-features {
+          gap: 15px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .container {
+          padding: 10px;
+        }
+
+        .header-content {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .filter-bar {
+          flex-direction: column;
+        }
+
+        .filter-select {
+          width: 100%;
+        }
+
+        .data-actions {
+          flex-direction: column;
+        }
+
+        .data-actions .btn {
+          width: 100%;
+        }
+      }
+
+      @media print {
+        .header,
+        .card:has(.form-group),
+        .filter-bar,
+        .transaction-actions,
+        .data-actions,
+        .theme-toggle,
+        .logout-btn,
+        .sync-status {
+          display: none !important;
+        }
+
+        .transaction-list {
+          max-height: none;
+        }
+
+        body {
+          background: white;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Firebase (modular) -->
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
+    onAuthStateChanged,
+    signOut,
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    deleteDoc,
+    writeBatch,
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCtjLVX2YHdWBouC2g2NUozfjWLsnw27QE",
+    authDomain: "expense-tracker-2b9e6.firebaseapp.com",
+    projectId: "expense-tracker-2b9e6",
+    storageBucket: "expense-tracker-2b9e6.firebasestorage.app",
+    messagingSenderId: "687091499060",
+    appId: "1:687091499060:web:89849a6a4918e924840a61",
+    measurementId: "G-ZHYDL9PQJT",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.fbAuth = {
+    auth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
+    onAuthStateChanged,
+    signOut,
+  };
+
+  window.fbStore = {
+    db,
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    deleteDoc,
+    writeBatch,
+  };
+ </script>
+ <script type="text/babel">
+    const { useEffect, useMemo, useRef, useState, useCallback } = React;
+  
+    // ==================== CONSTANTS ====================
+    const INCOME_CATEGORIES = [
+      { value: "salary", label: "Salary", icon: "💰" },
+      { value: "freelance", label: "Freelance", icon: "💻" },
+      { value: "investments", label: "Investments", icon: "📈" },
+      { value: "business", label: "Business", icon: "🏢" },
+      { value: "gifts", label: "Gifts", icon: "🎁" },
+      { value: "other-income", label: "Other Income", icon: "💵" },
+    ];
+  
+    const EXPENSE_CATEGORIES = [
+      { value: "food", label: "Food & Dining", icon: "🍔" },
+      { value: "transportation", label: "Transportation", icon: "🚗" },
+      { value: "shopping", label: "Shopping", icon: "🛍️" },
+      { value: "bills", label: "Bills & Utilities", icon: "📄" },
+      { value: "entertainment", label: "Entertainment", icon: "🎬" },
+      { value: "healthcare", label: "Healthcare", icon: "🏥" },
+      { value: "education", label: "Education", icon: "📚" },
+      { value: "travel", label: "Travel", icon: "✈️" },
+      { value: "other-expense", label: "Other Expenses", icon: "📦" },
+    ];
+  
+    // ==================== UTILS ====================
+    const generateId = () =>
+      Date.now().toString(36) + Math.random().toString(36).slice(2);
+  
+    const getCurrentDate = () => new Date().toISOString().split("T")[0];
+  
+    const formatCurrency = (amount) =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+      }).format(Number(amount || 0));
+  
+    const formatDate = (dateString) =>
+      new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+  
+    const getCategoryInfo = (categoryValue, type) => {
+      const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+      return (
+        categories.find((c) => c.value === categoryValue) || {
+          label: categoryValue || "Unknown",
+          icon: "📌",
+        }
+      );
+    };
+  
+    // Duplicate protection key (type+amount+category+date+desc+notes)
+    const expenseKey = (t) => {
+      const amt = typeof t.amount === "number" ? t.amount.toFixed(2) : Number(t.amount || 0).toFixed(2);
+      return `${t.type}|${amt}|${t.category}|${t.date}|${(t.description || "").trim()}|${(t.notes || "").trim()}`;
+    };
+  
+    const safeReadJSON = (key, fallback) => {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+  
+    const safeWriteJSON = (key, value) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {
+        // ignore quota errors
+      }
+    };
+  
+    const userTxKey = (uid) => `expense-tracker:${uid}:transactions:v1`;
+    const userQueueKey = (uid) => `expense-tracker:${uid}:queue:v1`;
+  
+    // ==================== OFFLINE QUEUE ====================
+    // op: { type: "upsert", tx } or { type:"delete", id }
+    const compactQueue = (queue) => {
+      // keep only the last operation per transaction id
+      const last = new Map();
+      for (const op of queue) {
+        if (!op) continue;
+        const id = op.type === "delete" ? op.id : op?.tx?.id;
+        if (!id) continue;
+        last.set(id, op);
+      }
+      return Array.from(last.values());
+    };
+  
+    const normalizeTx = (t) => {
+      const id = t.id || generateId();
+      const createdAt = Number(t.createdAt || Date.now());
+      const updatedAt = Number(t.updatedAt || createdAt);
+      return {
+        id,
+        type: t.type === "income" ? "income" : "expense",
+        description: String(t.description || "").trim(),
+        amount: typeof t.amount === "number" ? t.amount : Number(t.amount || 0),
+        category: String(t.category || ""),
+        date: t.date || getCurrentDate(),
+        notes: String(t.notes || ""),
+        createdAt,
+        updatedAt,
+      };
+    };
+  
+    const sortTx = (txs) =>
+      [...txs].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0) || new Date(b.date) - new Date(a.date));
+  
+    const mergeLocalAndCloud = (localTxs, cloudTxs, pendingDeleteIdsSet) => {
+      const byId = new Map();
+  
+      for (const c of cloudTxs) {
+        if (pendingDeleteIdsSet.has(c.id)) continue;
+        byId.set(c.id, c);
+      }
+  
+      for (const l of localTxs) {
+        if (pendingDeleteIdsSet.has(l.id)) continue;
+        const existing = byId.get(l.id);
+        if (!existing) {
+          byId.set(l.id, l);
+        } else {
+          // conflict resolution: pick latest updatedAt
+          const pick = (Number(l.updatedAt || 0) >= Number(existing.updatedAt || 0)) ? l : existing;
+          byId.set(l.id, pick);
+        }
+      }
+  
+      // also remove exact duplicates by expenseKey (keep newest)
+      const byKey = new Map();
+      for (const tx of byId.values()) {
+        const key = expenseKey(tx);
+        const prev = byKey.get(key);
+        if (!prev) byKey.set(key, tx);
+        else {
+          const pick = (Number(tx.updatedAt || 0) >= Number(prev.updatedAt || 0)) ? tx : prev;
+          byKey.set(key, pick);
+        }
+      }
+  
+      return sortTx(Array.from(byKey.values()));
+    };
+  
+    // ==================== TOAST ====================
+    const Toast = ({ message, type, onClose }) => {
+      useEffect(() => {
+        const t = setTimeout(onClose, 3000);
+        return () => clearTimeout(t);
+      }, [onClose]);
+  
+      return (
+        <div className={`toast ${type}`}>
+          {type === "success" ? "✓" : type === "error" ? "✕" : "ℹ"} {message}
+        </div>
+      );
+    };
+  
+    const ToastContainer = ({ toasts, removeToast }) => (
+      <div className="toast-container">
+        {toasts.map((t) => (
+          <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
+        ))}
+      </div>
+    );
+  
+    // ==================== SYNC STATUS INDICATOR ====================
+    const SyncStatusIndicator = ({ status, lastSynced }) => {
+      const info = useMemo(() => {
+        switch (status) {
+          case "syncing":
+            return { icon: "🔄", text: "Syncing...", className: "syncing" };
+          case "synced":
+            return { icon: "✅", text: "Synced", className: "synced" };
+          case "offline":
+            return { icon: "📴", text: "Offline", className: "offline" };
+          case "error":
+            return { icon: "⚠️", text: "Error", className: "error" };
+          case "paused":
+            return { icon: "⏸️", text: "Paused", className: "idle" };
+          default:
+            return { icon: "⏳", text: "Idle", className: "idle" };
+        }
+      }, [status]);
+  
+      return (
+        <div className={`sync-status ${info.className}`}>
+          <span className="sync-icon">{info.icon}</span>
+          <span className="sync-text">{info.text}</span>
+          {status === "synced" && lastSynced && (
+            <span className="sync-time">{new Date(lastSynced).toLocaleTimeString()}</span>
+          )}
+        </div>
+      );
+    };
+  
+    // ==================== LOGIN PAGE ====================
+    const LoginPage = ({ onLogin, onResetPassword, isLoading, error }) => {
+      const [mode, setMode] = useState("login"); // login | signup | reset
+      const [email, setEmail] = useState("");
+      const [password, setPassword] = useState("");
+      const [showPassword, setShowPassword] = useState(false);
+  
+      const submit = (e) => {
+        e.preventDefault();
+        if (mode === "reset") onResetPassword(email);
+        else onLogin(email, password, mode === "signup");
+      };
+  
+      return (
+        <div className="login-page">
+          <div className="login-container">
+            <div className="login-header">
+              <div className="login-logo">💰</div>
+              <h1>Expense Tracker</h1>
+              <p>
+                {mode === "login"
+                  ? "Sign in to continue"
+                  : mode === "signup"
+                  ? "Create an account"
+                  : "Reset your password"}
+              </p>
+            </div>
+  
+            <form className="login-form" onSubmit={submit}>
+              <div className="login-form-group">
+                <label>Email Address</label>
+                <div className="input-with-icon">
+                  <span className="input-icon">📧</span>
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+  
+              {mode !== "reset" && (
+                <div className="login-form-group">
+                  <label>Password</label>
+                  <div className="input-with-icon">
+                    <span className="input-icon">🔒</span>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength="6"
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPassword((s) => !s)}
+                    >
+                      {showPassword ? "👁️" : "👁️‍🗨️"}
+                    </button>
+                  </div>
+                </div>
+              )}
+  
+              {error && <div className="login-error">{error}</div>}
+  
+              <button className="login-btn-submit" disabled={isLoading} type="submit">
+                {isLoading ? <span className="loading-spinner" /> : mode === "reset" ? "Send Reset Link" : mode === "signup" ? "Create Account" : "Sign In"}
+              </button>
+  
+              {mode === "login" && (
+                <button
+                  type="button"
+                  className="login-btn-toggle"
+                  onClick={() => setMode("reset")}
+                >
+                  Forgot password?
+                </button>
+              )}
+  
+              <div className="login-divider">
+                <span>or</span>
+              </div>
+  
+              {mode === "reset" ? (
+                <button type="button" className="login-btn-toggle" onClick={() => setMode("login")}>
+                  Back to Sign In
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="login-btn-toggle"
+                  onClick={() => setMode((m) => (m === "login" ? "signup" : "login"))}
+                >
+                  {mode === "signup"
+                    ? "Already have an account? Sign In"
+                    : "Don't have an account? Sign Up"}
+                </button>
+              )}
+            </form>
+  
+            <div className="login-features">
+              <div className="feature-item">
+                <span>🔐</span>
+                <span>Secure</span>
+              </div>
+              <div className="feature-item">
+                <span>☁️</span>
+                <span>Cloud Sync</span>
+              </div>
+              <div className="feature-item">
+                <span>📴</span>
+                <span>Offline</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+  
+    // ==================== BALANCE CARDS ====================
+    const BalanceCards = ({ transactions }) => {
+      const { balance, totalIncome, totalExpense } = useMemo(() => {
+        let income = 0, expense = 0;
+        for (const t of transactions) {
+          const a = Number(t.amount || 0);
+          if (t.type === "income") income += a;
+          else expense += a;
+        }
+        return { balance: income - expense, totalIncome: income, totalExpense: expense };
+      }, [transactions]);
+  
+      return (
+        <div className="balance-cards">
+          <div className="balance-card main">
+            <h3>Total Balance</h3>
+            <div className="amount">{formatCurrency(balance)}</div>
+            <span className="icon">💎</span>
+          </div>
+          <div className="balance-card income">
+            <h3>Total Income</h3>
+            <div className="amount">{formatCurrency(totalIncome)}</div>
+            <span className="icon">📈</span>
+          </div>
+          <div className="balance-card expense">
+            <h3>Total Expenses</h3>
+            <div className="amount">{formatCurrency(totalExpense)}</div>
+            <span className="icon">📉</span>
+          </div>
+        </div>
+      );
+    };
+  
+    // ==================== TRANSACTION FORM ====================
+    const TransactionForm = ({ onAdd }) => {
+      const [form, setForm] = useState({
+        description: "",
+        amount: "",
+        type: "expense",
+        category: "",
+        date: getCurrentDate(),
+        notes: "",
+      });
+  
+      const categories = form.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  
+      const change = (e) => {
+        const { name, value } = e.target;
+        setForm((p) => ({
+          ...p,
+          [name]: value,
+          ...(name === "type" ? { category: "" } : {}),
+        }));
+      };
+  
+      const submit = (e) => {
+        e.preventDefault();
+        const tx = normalizeTx({
+          id: generateId(),
+          ...form,
+          amount: Number(form.amount),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        onAdd(tx);
+  
+        setForm({
+          description: "",
+          amount: "",
+          type: "expense",
+          category: "",
+          date: getCurrentDate(),
+          notes: "",
+        });
+      };
+  
+      return (
+        <div className="card">
+          <div className="card-header">
+            <h2>➕ Add Transaction</h2>
+          </div>
+          <div className="card-body">
+            <form onSubmit={submit}>
+              <div className="form-group">
+                <label>Transaction Type</label>
+                <div className="type-selector">
+                  <div
+                    className={`type-option expense ${form.type === "expense" ? "selected" : ""}`}
+                    onClick={() => change({ target: { name: "type", value: "expense" } })}
+                  >
+                    📉 Expense
+                  </div>
+                  <div
+                    className={`type-option income ${form.type === "income" ? "selected" : ""}`}
+                    onClick={() => change({ target: { name: "type", value: "income" } })}
+                  >
+                    📈 Income
+                  </div>
+                </div>
+              </div>
+  
+              <div className="form-group">
+                <label>Description *</label>
+                <input
+                  name="description"
+                  className="form-control"
+                  value={form.description}
+                  onChange={change}
+                  required
+                  minLength={2}
+                />
+              </div>
+  
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Amount *</label>
+                  <input
+                    name="amount"
+                    type="number"
+                    className="form-control"
+                    value={form.amount}
+                    onChange={change}
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Date *</label>
+                  <input
+                    name="date"
+                    type="date"
+                    className="form-control"
+                    value={form.date}
+                    onChange={change}
+                    required
+                  />
+                </div>
+              </div>
+  
+              <div className="form-group">
+                <label>Category *</label>
+                <select
+                  name="category"
+                  className="form-control"
+                  value={form.category}
+                  onChange={change}
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.icon} {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+  
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  name="notes"
+                  className="form-control"
+                  rows="3"
+                  value={form.notes}
+                  onChange={change}
+                  placeholder="Optional notes..."
+                />
+              </div>
+  
+              <button className="btn btn-primary btn-block" type="submit">
+                ➕ Add Transaction
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    };
+  
+    // ==================== FILTER BAR ====================
+    const FilterBar = ({ filters, setFilters, transactions }) => {
+      const allCategories = useMemo(() => {
+        const s = new Set(transactions.map((t) => t.category).filter(Boolean));
+        return Array.from(s);
+      }, [transactions]);
+  
+      return (
+        <div className="filter-bar">
+          <div className="search-input">
+            <input
+              placeholder="Search transactions..."
+              value={filters.searchTerm}
+              onChange={(e) => setFilters((p) => ({ ...p, searchTerm: e.target.value }))}
+            />
+          </div>
+  
+          <select
+            className="filter-select"
+            value={filters.type}
+            onChange={(e) => setFilters((p) => ({ ...p, type: e.target.value }))}
+          >
+            <option value="all">All Types</option>
+            <option value="income">Income Only</option>
+            <option value="expense">Expenses Only</option>
+          </select>
+  
+          <select
+            className="filter-select"
+            value={filters.category}
+            onChange={(e) => setFilters((p) => ({ ...p, category: e.target.value }))}
+          >
+            <option value="all">All Categories</option>
+            {allCategories.map((cat) => {
+              const info = getCategoryInfo(cat, "expense");
+              return (
+                <option key={cat} value={cat}>
+                  {info.icon} {info.label}
+                </option>
+              );
+            })}
+          </select>
+  
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setFilters({ searchTerm: "", type: "all", category: "all" })}
+          >
+            ✕ Clear
+          </button>
+        </div>
+      );
+    };
+  
+    // ==================== TRANSACTION LIST ====================
+    const TransactionList = ({ transactions, filters, onEdit, onDelete }) => {
+      const filtered = useMemo(() => {
+        return transactions
+          .filter((t) => {
+            if (filters.searchTerm && !String(t.description || "").toLowerCase().includes(filters.searchTerm.toLowerCase()))
+              return false;
+            if (filters.type !== "all" && t.type !== filters.type) return false;
+            if (filters.category !== "all" && t.category !== filters.category) return false;
+            return true;
+          })
+          .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      }, [transactions, filters]);
+  
+      if (transactions.length === 0) {
+        return (
+          <div className="empty-state">
+            <div className="empty-state-icon">📝</div>
+            <h3>No Transactions Yet</h3>
+            <p>Start by adding your first income or expense</p>
+          </div>
+        );
+      }
+  
+      if (filtered.length === 0) {
+        return (
+          <div className="empty-state">
+            <div className="empty-state-icon">🔍</div>
+            <h3>No Results Found</h3>
+            <p>Try adjusting your search or filters</p>
+          </div>
+        );
+      }
+  
+      return (
+        <div className="transaction-list">
+          {filtered.map((t) => {
+            const info = getCategoryInfo(t.category, t.type);
+            return (
+              <div key={t.id} className="transaction-item">
+                <div className={`transaction-icon ${t.type}`}>{info.icon}</div>
+  
+                <div className="transaction-details">
+                  <div className="transaction-title">
+                    {t.description}{" "}
+                    {t.__pending && (
+                      <span style={{ fontSize: "0.75rem", color: "#ffb300" }}>
+                        (pending)
+                      </span>
+                    )}
+                  </div>
+                  <div className="transaction-meta">
+                    {info.label} • {formatDate(t.date)}
+                  </div>
+                </div>
+  
+                <div className={`transaction-amount ${t.type}`}>
+                  {t.type === "income" ? "+" : "-"}
+                  {formatCurrency(t.amount)}
+                </div>
+  
+                <div className="transaction-actions">
+                  <button className="action-btn" onClick={() => onEdit(t)} aria-label="Edit">
+                    ✏️
+                  </button>
+                  <button className="action-btn delete" onClick={() => onDelete(t)} aria-label="Delete">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    };
+  
+    // ==================== MODALS ====================
+    const EditModal = ({ tx, onSave, onClose }) => {
+      const [form, setForm] = useState({ ...tx });
+  
+      const categories = form.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  
+      const change = (e) => {
+        const { name, value } = e.target;
+        setForm((p) => ({
+          ...p,
+          [name]: value,
+          ...(name === "type" ? { category: "" } : {}),
+        }));
+      };
+  
+      const submit = (e) => {
+        e.preventDefault();
+        onSave(
+          normalizeTx({
+            ...form,
+            amount: Number(form.amount),
+            updatedAt: Date.now(),
+          })
+        );
+      };
+  
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>✏️ Edit Transaction</h2>
+              <button className="modal-close" onClick={onClose}>
+                &times;
+              </button>
+            </div>
+  
+            <form onSubmit={submit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Type</label>
+                  <div className="type-selector">
+                    <div
+                      className={`type-option expense ${form.type === "expense" ? "selected" : ""}`}
+                      onClick={() => change({ target: { name: "type", value: "expense" } })}
+                    >
+                      📉 Expense
+                    </div>
+                    <div
+                      className={`type-option income ${form.type === "income" ? "selected" : ""}`}
+                      onClick={() => change({ target: { name: "type", value: "income" } })}
+                    >
+                      📈 Income
+                    </div>
+                  </div>
+                </div>
+  
+                <div className="form-group">
+                  <label>Description</label>
+                  <input name="description" className="form-control" value={form.description} onChange={change} required />
+                </div>
+  
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Amount</label>
+                    <input name="amount" type="number" className="form-control" value={form.amount} onChange={change} required min="0" step="0.01" />
+                  </div>
+                  <div className="form-group">
+                    <label>Date</label>
+                    <input name="date" type="date" className="form-control" value={form.date} onChange={change} required />
+                  </div>
+                </div>
+  
+                <div className="form-group">
+                  <label>Category</label>
+                  <select name="category" className="form-control" value={form.category} onChange={change} required>
+                    <option value="">Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.icon} {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+  
+                <div className="form-group">
+                  <label>Notes</label>
+                  <textarea name="notes" className="form-control" rows="3" value={form.notes || ""} onChange={change} />
+                </div>
+              </div>
+  
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  💾 Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+  
+    const DeleteModal = ({ onConfirm, onClose }) => (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2>⚠️ Confirm Delete</h2>
+            <button className="modal-close" onClick={onClose}>
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            <p>Delete this transaction? This cannot be undone.</p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="btn btn-danger" onClick={onConfirm}>
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  
+    // ==================== DATA MANAGEMENT (MERGE/REPLACE + DUPLICATE PROTECTION) ====================
+    const DataManagement = ({ transactions, onImportTransactions, onReplaceTransactions, addToast }) => {
+      const [showImportModal, setShowImportModal] = useState(false);
+      const [importMode, setImportMode] = useState("merge");
+      const [pendingData, setPendingData] = useState(null);
+  
+      const exportJSON = () => {
+        const blob = new Blob([JSON.stringify(transactions, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `expense-tracker-${getCurrentDate()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        addToast("Exported JSON", "success");
+      };
+  
+      const exportCSV = () => {
+        const headers = ["Date", "Description", "Type", "Category", "Amount", "Notes"];
+        const rows = transactions.map((t) => {
+          const info = getCategoryInfo(t.category, t.type);
+          return [
+            t.date,
+            `"${String(t.description || "").replaceAll('"', '""')}"`,
+            t.type,
+            `"${String(info.label || "").replaceAll('"', '""')}"`,
+            Number(t.amount || 0),
+            `"${String(t.notes || "").replaceAll('"', '""')}"`,
+          ].join(",");
+        });
+        const csv = [headers.join(","), ...rows].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `expense-tracker-${getCurrentDate()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        addToast("Exported CSV", "success");
+      };
+  
+      const onPickFile = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+  
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(String(reader.result || ""));
+            if (!Array.isArray(parsed)) throw new Error("Invalid file format");
+            setPendingData(parsed);
+            setImportMode("merge");
+            setShowImportModal(true);
+          } catch {
+            addToast("Import failed: invalid JSON file.", "error");
+          } finally {
+            e.target.value = "";
+          }
+        };
+        reader.readAsText(file);
+      };
+  
+      const confirmImport = () => {
+        if (!Array.isArray(pendingData)) return;
+        if (importMode === "replace") onReplaceTransactions(pendingData);
+        else onImportTransactions(pendingData);
+        setPendingData(null);
+        setShowImportModal(false);
+      };
+  
+      return (
+        <div className="card">
+          <div className="card-header">
+            <h2>⚙️ Data Management</h2>
+          </div>
+          <div className="card-body">
+            <div className="data-actions">
+              <button className="btn btn-primary btn-sm" onClick={exportJSON}>
+                📥 Export JSON
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={exportCSV}>
+                📊 Export CSV
+              </button>
+  
+              <label className="btn btn-secondary btn-sm">
+                📤 Import JSON
+                <input className="file-input" type="file" accept=".json" onChange={onPickFile} />
+              </label>
+            </div>
+  
+            {showImportModal && (
+              <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="modal-header">
+                    <h2>📤 Import Options</h2>
+                    <button className="modal-close" onClick={() => setShowImportModal(false)}>
+                      &times;
+                    </button>
+                  </div>
+                  <div className="modal-body">
+                    <p style={{ marginBottom: 12 }}>Choose how to import:</p>
+                    <label style={{ display: "block", marginBottom: 10 }}>
+                      <input type="radio" checked={importMode === "merge"} onChange={() => setImportMode("merge")} />{" "}
+                      <strong>Merge</strong> (skip duplicates)
+                    </label>
+                    <label style={{ display: "block" }}>
+                      <input type="radio" checked={importMode === "replace"} onChange={() => setImportMode("replace")} />{" "}
+                      <strong>Replace</strong> (overwrite everything)
+                    </label>
+                  </div>
+                  <div className="modal-footer">
+                    <button className="btn btn-secondary" onClick={() => setShowImportModal(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn btn-primary" onClick={confirmImport}>
+                      Import
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }; 
+    const AnalysisSection = ({ transactions }) => {
+  const [activeTab, setActiveTab] = useState("monthly"); // monthly | yearly
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  
+  // Chart refs
+  const incomeExpenseChartRef = useRef(null);
+  const categoryPieChartRef = useRef(null);
+  const dailyLineChartRef = useRef(null);
+  const monthlyBarChartRef = useRef(null);
+  const yearlyTrendChartRef = useRef(null);
+  const yearlyPieChartRef = useRef(null);
+  
+  // Chart instances
+  const chartInstancesRef = useRef({});
+
+  // Get available years from transactions
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    transactions.forEach(t => {
+      const year = new Date(t.date).getFullYear();
+      years.add(year);
+    });
+    const currentYear = new Date().getFullYear();
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => b - a);
+  }, [transactions]);
+
+  // Month names
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const shortMonthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  // Filter transactions for selected month
+  const monthlyTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const date = new Date(t.date);
+      return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
+    });
+  }, [transactions, selectedYear, selectedMonth]);
+
+  // Filter transactions for selected year
+  const yearlyTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const date = new Date(t.date);
+      return date.getFullYear() === selectedYear;
+    });
+  }, [transactions, selectedYear]);
+
+  // Calculate monthly statistics
+  const monthlyStats = useMemo(() => {
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const categoryTotals = {};
+    const dailyData = {};
+
+    monthlyTransactions.forEach(t => {
+      const amount = Number(t.amount || 0);
+      const day = new Date(t.date).getDate();
+
+      if (t.type === "income") {
+        totalIncome += amount;
+      } else {
+        totalExpense += amount;
+        // Category breakdown for expenses only
+        if (!categoryTotals[t.category]) {
+          categoryTotals[t.category] = 0;
+        }
+        categoryTotals[t.category] += amount;
+      }
+
+      // Daily data
+      if (!dailyData[day]) {
+        dailyData[day] = { income: 0, expense: 0 };
+      }
+      if (t.type === "income") {
+        dailyData[day].income += amount;
+      } else {
+        dailyData[day].expense += amount;
+      }
+    });
+
+    // Get previous month data for comparison
+    const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+    const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+    const prevMonthTxs = transactions.filter(t => {
+      const date = new Date(t.date);
+      return date.getFullYear() === prevYear && date.getMonth() === prevMonth;
+    });
+
+    let prevIncome = 0, prevExpense = 0;
+    prevMonthTxs.forEach(t => {
+      if (t.type === "income") prevIncome += Number(t.amount || 0);
+      else prevExpense += Number(t.amount || 0);
+    });
+
+    const incomeChange = prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome) * 100 : 0;
+    const expenseChange = prevExpense > 0 ? ((totalExpense - prevExpense) / prevExpense) * 100 : 0;
+
+    return {
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+      categoryTotals,
+      dailyData,
+      transactionCount: monthlyTransactions.length,
+      avgTransaction: monthlyTransactions.length > 0 ? (totalIncome + totalExpense) / monthlyTransactions.length : 0,
+      incomeChange,
+      expenseChange
+    };
+  }, [monthlyTransactions, transactions, selectedMonth, selectedYear]);
+
+  // Calculate yearly statistics
+  const yearlyStats = useMemo(() => {
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const categoryTotals = {};
+    const monthlyData = Array(12).fill(null).map(() => ({ income: 0, expense: 0 }));
+
+    yearlyTransactions.forEach(t => {
+      const amount = Number(t.amount || 0);
+      const month = new Date(t.date).getMonth();
+
+      if (t.type === "income") {
+        totalIncome += amount;
+        monthlyData[month].income += amount;
+      } else {
+        totalExpense += amount;
+        monthlyData[month].expense += amount;
+        
+        if (!categoryTotals[t.category]) {
+          categoryTotals[t.category] = 0;
+        }
+        categoryTotals[t.category] += amount;
+      }
+    });
+
+    // Get previous year data for comparison
+    const prevYearTxs = transactions.filter(t => {
+      const date = new Date(t.date);
+      return date.getFullYear() === selectedYear - 1;
+    });
+
+    let prevIncome = 0, prevExpense = 0;
+    prevYearTxs.forEach(t => {
+      if (t.type === "income") prevIncome += Number(t.amount || 0);
+      else prevExpense += Number(t.amount || 0);
+    });
+
+    const incomeChange = prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome) * 100 : 0;
+    const expenseChange = prevExpense > 0 ? ((totalExpense - prevExpense) / prevExpense) * 100 : 0;
+
+    // Find best and worst months
+    let bestMonth = 0, worstMonth = 0;
+    let bestBalance = monthlyData[0].income - monthlyData[0].expense;
+    let worstBalance = bestBalance;
+
+    monthlyData.forEach((data, index) => {
+      const balance = data.income - data.expense;
+      if (balance > bestBalance) {
+        bestBalance = balance;
+        bestMonth = index;
+      }
+      if (balance < worstBalance) {
+        worstBalance = balance;
+        worstMonth = index;
+      }
+    });
+
+    return {
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+      categoryTotals,
+      monthlyData,
+      transactionCount: yearlyTransactions.length,
+      avgMonthlyIncome: totalIncome / 12,
+      avgMonthlyExpense: totalExpense / 12,
+      incomeChange,
+      expenseChange,
+      bestMonth: monthNames[bestMonth],
+      worstMonth: monthNames[worstMonth],
+      bestBalance,
+      worstBalance
+    };
+  }, [yearlyTransactions, transactions, selectedYear]);
+
+  // Chart colors
+  const chartColors = {
+    income: 'rgba(40, 167, 69, 0.8)',
+    incomeBg: 'rgba(40, 167, 69, 0.2)',
+    expense: 'rgba(220, 53, 69, 0.8)',
+    expenseBg: 'rgba(220, 53, 69, 0.2)',
+    primary: 'rgba(102, 126, 234, 0.8)',
+    primaryBg: 'rgba(102, 126, 234, 0.2)',
+    categories: [
+      'rgba(255, 99, 132, 0.8)',
+      'rgba(54, 162, 235, 0.8)',
+      'rgba(255, 206, 86, 0.8)',
+      'rgba(75, 192, 192, 0.8)',
+      'rgba(153, 102, 255, 0.8)',
+      'rgba(255, 159, 64, 0.8)',
+      'rgba(199, 199, 199, 0.8)',
+      'rgba(83, 102, 255, 0.8)',
+      'rgba(255, 99, 255, 0.8)',
+    ]
+  };
+
+  // Destroy chart helper
+  const destroyChart = (chartKey) => {
+    if (chartInstancesRef.current[chartKey]) {
+      chartInstancesRef.current[chartKey].destroy();
+      chartInstancesRef.current[chartKey] = null;
+    }
+  };
+
+  // Monthly Charts
+  useEffect(() => {
+    if (activeTab !== "monthly") return;
+
+    // Income vs Expense Bar Chart
+    if (incomeExpenseChartRef.current) {
+      destroyChart('incomeExpense');
+      const ctx = incomeExpenseChartRef.current.getContext('2d');
+      chartInstancesRef.current.incomeExpense = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Income', 'Expenses', 'Balance'],
+          datasets: [{
+            label: 'Amount ($)',
+            data: [monthlyStats.totalIncome, monthlyStats.totalExpense, monthlyStats.balance],
+            backgroundColor: [
+              chartColors.income,
+              chartColors.expense,
+              monthlyStats.balance >= 0 ? chartColors.income : chartColors.expense
+            ],
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `$${context.raw.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Category Pie Chart
+    if (categoryPieChartRef.current) {
+      destroyChart('categoryPie');
+      const categories = Object.keys(monthlyStats.categoryTotals);
+      const values = Object.values(monthlyStats.categoryTotals);
+      
+      if (categories.length > 0) {
+        const ctx = categoryPieChartRef.current.getContext('2d');
+        chartInstancesRef.current.categoryPie = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: categories.map(cat => {
+              const info = getCategoryInfo(cat, 'expense');
+              return `${info.icon} ${info.label}`;
+            }),
+            datasets: [{
+              data: values,
+              backgroundColor: chartColors.categories,
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  boxWidth: 15,
+                  padding: 10,
+                  font: { size: 11 }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                    return `$${context.raw.toFixed(2)} (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Daily Line Chart
+    if (dailyLineChartRef.current) {
+      destroyChart('dailyLine');
+      const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+      const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+      const incomeData = labels.map(day => monthlyStats.dailyData[day]?.income || 0);
+      const expenseData = labels.map(day => monthlyStats.dailyData[day]?.expense || 0);
+
+      const ctx = dailyLineChartRef.current.getContext('2d');
+      chartInstancesRef.current.dailyLine = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Income',
+              data: incomeData,
+              borderColor: chartColors.income,
+              backgroundColor: chartColors.incomeBg,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'Expenses',
+              data: expenseData,
+              borderColor: chartColors.expense,
+              backgroundColor: chartColors.expenseBg,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: $${context.raw.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false },
+              title: { display: true, text: 'Day of Month' }
+            }
+          }
+        }
+      });
+    }
+
+    return () => {
+      destroyChart('incomeExpense');
+      destroyChart('categoryPie');
+      destroyChart('dailyLine');
+    };
+  }, [activeTab, monthlyStats, selectedYear, selectedMonth]);
+
+  // Yearly Charts
+  useEffect(() => {
+    if (activeTab !== "yearly") return;
+
+    // Monthly Bar Chart
+    if (monthlyBarChartRef.current) {
+      destroyChart('monthlyBar');
+      const ctx = monthlyBarChartRef.current.getContext('2d');
+      chartInstancesRef.current.monthlyBar = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: shortMonthNames,
+          datasets: [
+            {
+              label: 'Income',
+              data: yearlyStats.monthlyData.map(d => d.income),
+              backgroundColor: chartColors.income,
+              borderRadius: 4,
+            },
+            {
+              label: 'Expenses',
+              data: yearlyStats.monthlyData.map(d => d.expense),
+              backgroundColor: chartColors.expense,
+              borderRadius: 4,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: $${context.raw.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Yearly Trend Line Chart
+    if (yearlyTrendChartRef.current) {
+      destroyChart('yearlyTrend');
+      const balanceData = yearlyStats.monthlyData.map(d => d.income - d.expense);
+      
+      // Cumulative savings
+      let cumulative = 0;
+      const cumulativeData = balanceData.map(b => {
+        cumulative += b;
+        return cumulative;
+      });
+
+      const ctx = yearlyTrendChartRef.current.getContext('2d');
+      chartInstancesRef.current.yearlyTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: shortMonthNames,
+          datasets: [
+            {
+              label: 'Monthly Balance',
+              data: balanceData,
+              borderColor: chartColors.primary,
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 7
+            },
+            {
+              label: 'Cumulative Savings',
+              data: cumulativeData,
+              borderColor: chartColors.income,
+              backgroundColor: chartColors.incomeBg,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 7
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: $${context.raw.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Yearly Category Pie
+    if (yearlyPieChartRef.current) {
+      destroyChart('yearlyPie');
+      const categories = Object.keys(yearlyStats.categoryTotals);
+      const values = Object.values(yearlyStats.categoryTotals);
+
+      if (categories.length > 0) {
+        const ctx = yearlyPieChartRef.current.getContext('2d');
+        chartInstancesRef.current.yearlyPie = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: categories.map(cat => {
+              const info = getCategoryInfo(cat, 'expense');
+              return `${info.icon} ${info.label}`;
+            }),
+            datasets: [{
+              data: values,
+              backgroundColor: chartColors.categories,
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 15,
+                  padding: 10,
+                  font: { size: 11 }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                    return `$${context.raw.toFixed(2)} (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    return () => {
+      destroyChart('monthlyBar');
+      destroyChart('yearlyTrend');
+      destroyChart('yearlyPie');
+    };
+  }, [activeTab, yearlyStats]);
+
+  // Navigation handlers
+  const goToPrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(y => y - 1);
+    } else {
+      setSelectedMonth(m => m - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(y => y + 1);
+    } else {
+      setSelectedMonth(m => m + 1);
+    }
+  };
+
+  const goToPrevYear = () => setSelectedYear(y => y - 1);
+  const goToNextYear = () => setSelectedYear(y => y + 1);
+
+  // Render category breakdown list
+  const renderCategoryBreakdown = (categoryTotals, type = 'expense') => {
+    const sorted = Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1]);
+
+    if (sorted.length === 0) {
+      return (
+        <div className="no-data">
+          <div className="no-data-icon">📊</div>
+          <h4>No expense data</h4>
+          <p>Add some transactions to see category breakdown</p>
+        </div>
+      );
+    }
+
+    const total = sorted.reduce((acc, [, val]) => acc + val, 0);
+
+    return (
+      <div>
+        {sorted.map(([category, amount]) => {
+          const info = getCategoryInfo(category, type);
+          const percentage = ((amount / total) * 100).toFixed(1);
+          return (
+            <div key={category} className="category-item">
+              <div className="category-icon">{info.icon}</div>
+              <div className="category-info">
+                <div className="category-name">{info.label}</div>
+                <div className="category-count">{percentage}% of total</div>
+              </div>
+              <div className="category-amount" style={{ color: 'var(--expense-color)' }}>
+                ${amount.toFixed(2)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div className="analysis-section">
+      <div className="analysis-header">
+        <h2>📊 Financial Analysis</h2>
+        <div className="analysis-tabs">
+          <button
+            className={`analysis-tab ${activeTab === 'monthly' ? 'active' : ''}`}
+            onClick={() => setActiveTab('monthly')}
+          >
+            📅 Monthly
+          </button>
+          <button
+            className={`analysis-tab ${activeTab === 'yearly' ? 'active' : ''}`}
+            onClick={() => setActiveTab('yearly')}
+          >
+            📆 Yearly
+          </button>
+        </div>
+      </div>
+
+      {/* Period Selector */}
+      <div className="period-selector" style={{ marginBottom: 20 }}>
+        {activeTab === 'monthly' ? (
+          <>
+            <div className="period-nav">
+              <button onClick={goToPrevMonth}>◀</button>
+            </div>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            >
+              {monthNames.map((name, index) => (
+                <option key={index} value={index}>{name}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <div className="period-nav">
+              <button onClick={goToNextMonth}>▶</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="period-nav">
+              <button onClick={goToPrevYear}>◀</button>
+            </div>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <div className="period-nav">
+              <button onClick={goToNextYear}>▶</button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* MONTHLY VIEW */}
+      {activeTab === 'monthly' && (
+        <>
+          {/* Summary Cards */}
+          <div className="summary-cards">
+            <div className="summary-card">
+              <div className="icon">💵</div>
+              <div className="label">Total Income</div>
+              <div className="value positive">{formatCurrency(monthlyStats.totalIncome)}</div>
+              {monthlyStats.incomeChange !== 0 && (
+                <div className={`trend ${monthlyStats.incomeChange >= 0 ? 'up' : 'down'}`}>
+                  {monthlyStats.incomeChange >= 0 ? '↑' : '↓'} 
+                  {Math.abs(monthlyStats.incomeChange).toFixed(1)}% vs last month
+                </div>
+              )}
+            </div>
+            <div className="summary-card">
+              <div className="icon">💸</div>
+              <div className="label">Total Expenses</div>
+              <div className="value negative">{formatCurrency(monthlyStats.totalExpense)}</div>
+              {monthlyStats.expenseChange !== 0 && (
+                <div className={`trend ${monthlyStats.expenseChange <= 0 ? 'up' : 'down'}`}>
+                  {monthlyStats.expenseChange <= 0 ? '↓' : '↑'} 
+                  {Math.abs(monthlyStats.expenseChange).toFixed(1)}% vs last month
+                </div>
+              )}
+            </div>
+            <div className="summary-card">
+              <div className="icon">💰</div>
+              <div className="label">Net Balance</div>
+              <div className={`value ${monthlyStats.balance >= 0 ? 'positive' : 'negative'}`}>
+                {formatCurrency(monthlyStats.balance)}
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="icon">📝</div>
+              <div className="label">Transactions</div>
+              <div className="value">{monthlyStats.transactionCount}</div>
+              <div className="trend">
+                Avg: {formatCurrency(monthlyStats.avgTransaction)}
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="comparison-grid">
+            <div className="chart-box">
+              <h3>📊 Income vs Expenses</h3>
+              <div className="canvas-container">
+                <canvas ref={incomeExpenseChartRef}></canvas>
+              </div>
+            </div>
+            <div className="chart-box">
+              <h3>🥧 Expense Categories</h3>
+              <div className="canvas-container">
+                {Object.keys(monthlyStats.categoryTotals).length > 0 ? (
+                  <canvas ref={categoryPieChartRef}></canvas>
+                ) : (
+                  <div className="no-data">
+                    <div className="no-data-icon">📊</div>
+                    <h4>No expense data</h4>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Daily Trend */}
+          <div className="chart-box">
+            <h3>📈 Daily Income & Expense Trend</h3>
+            <div className="canvas-container" style={{ height: 250 }}>
+              <canvas ref={dailyLineChartRef}></canvas>
+            </div>
+          </div>
+
+          {/* Category Breakdown */}
+          <div className="category-breakdown">
+            <h3>📋 Expense Category Breakdown</h3>
+            {renderCategoryBreakdown(monthlyStats.categoryTotals)}
+          </div>
+        </>
+      )}
+
+      {/* YEARLY VIEW */}
+      {activeTab === 'yearly' && (
+        <>
+          {/* Summary Cards */}
+          <div className="summary-cards">
+            <div className="summary-card">
+              <div className="icon">💵</div>
+              <div className="label">Total Income</div>
+              <div className="value positive">{formatCurrency(yearlyStats.totalIncome)}</div>
+              {yearlyStats.incomeChange !== 0 && (
+                <div className={`trend ${yearlyStats.incomeChange >= 0 ? 'up' : 'down'}`}>
+                  {yearlyStats.incomeChange >= 0 ? '↑' : '↓'} 
+                  {Math.abs(yearlyStats.incomeChange).toFixed(1)}% vs last year
+                </div>
+              )}
+            </div>
+            <div className="summary-card">
+              <div className="icon">💸</div>
+              <div className="label">Total Expenses</div>
+              <div className="value negative">{formatCurrency(yearlyStats.totalExpense)}</div>
+              {yearlyStats.expenseChange !== 0 && (
+                <div className={`trend ${yearlyStats.expenseChange <= 0 ? 'up' : 'down'}`}>
+                  {yearlyStats.expenseChange <= 0 ? '↓' : '↑'} 
+                  {Math.abs(yearlyStats.expenseChange).toFixed(1)}% vs last year
+                </div>
+              )}
+            </div>
+            <div className="summary-card">
+              <div className="icon">💰</div>
+              <div className="label">Net Savings</div>
+              <div className={`value ${yearlyStats.balance >= 0 ? 'positive' : 'negative'}`}>
+                {formatCurrency(yearlyStats.balance)}
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="icon">📊</div>
+              <div className="label">Monthly Avg</div>
+              <div className="value">
+                {formatCurrency(yearlyStats.avgMonthlyExpense)}
+              </div>
+              <div className="trend">spending/month</div>
+            </div>
+          </div>
+
+          {/* Year Overview Grid */}
+          <div className="chart-box">
+            <h3>📅 Year at a Glance - Click to view month</h3>
+            <div className="year-overview">
+              {shortMonthNames.map((month, index) => {
+                const data = yearlyStats.monthlyData[index];
+                const balance = data.income - data.expense;
+                return (
+                  <div
+                    key={index}
+                    className={`month-box ${selectedMonth === index ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMonth(index);
+                      setActiveTab('monthly');
+                    }}
+                  >
+                    <div className="month-name">{month}</div>
+                    <div className={`month-total ${balance >= 0 ? 'positive' : 'negative'}`}>
+                      {balance >= 0 ? '+' : ''}{formatCurrency(balance).replace('$', '')}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Monthly Comparison Chart */}
+          <div className="chart-box">
+            <h3>📊 Monthly Income vs Expenses</h3>
+            <div className="canvas-container" style={{ height: 300 }}>
+              <canvas ref={monthlyBarChartRef}></canvas>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="comparison-grid">
+            <div className="chart-box">
+              <h3>📈 Savings Trend</h3>
+              <div className="canvas-container" style={{ height: 280 }}>
+                <canvas ref={yearlyTrendChartRef}></canvas>
+              </div>
+            </div>
+            <div className="chart-box">
+              <h3>🥧 Yearly Expense Distribution</h3>
+              <div className="canvas-container" style={{ height: 280 }}>
+                {Object.keys(yearlyStats.categoryTotals).length > 0 ? (
+                  <canvas ref={yearlyPieChartRef}></canvas>
+                ) : (
+                  <div className="no-data">
+                    <div className="no-data-icon">📊</div>
+                    <h4>No expense data</h4>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Best/Worst Month Comparison */}
+          <div className="comparison-grid">
+            <div className="comparison-card">
+              <h3>🏆 Best Month: {yearlyStats.bestMonth}</h3>
+              <div className="comparison-item">
+                <span className="label">Balance</span>
+                <span className="value" style={{ color: 'var(--income-color)' }}>
+                  {formatCurrency(yearlyStats.bestBalance)}
+                </span>
+              </div>
+            </div>
+            <div className="comparison-card">
+              <h3>📉 Highest Spending: {yearlyStats.worstMonth}</h3>
+              <div className="comparison-item">
+                <span className="label">Balance</span>
+                <span className="value" style={{ color: yearlyStats.worstBalance < 0 ? 'var(--expense-color)' : 'var(--income-color)' }}>
+                  {formatCurrency(yearlyStats.worstBalance)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Yearly Category Breakdown */}
+          <div className="category-breakdown">
+            <h3>📋 Yearly Expense Category Breakdown</h3>
+            {renderCategoryBreakdown(yearlyStats.categoryTotals)}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// 
+    
+    
+    
+  
+    // ==================== MAIN APP ====================
+    const App = () => {
+      const [authLoading, setAuthLoading] = useState(true);
+      const [user, setUser] = useState(null);
+  
+      const [loginLoading, setLoginLoading] = useState(false);
+      const [loginError, setLoginError] = useState("");
+  
+      const [transactions, setTransactions] = useState([]);
+      const [filters, setFilters] = useState({ searchTerm: "", type: "all", category: "all" });
+  
+      const [editingTx, setEditingTx] = useState(null);
+      const [deleteTx, setDeleteTx] = useState(null);
+  
+      const [toasts, setToasts] = useState([]);
+      const [darkMode, setDarkMode] = useState(false);
+  
+      const [autoSync, setAutoSync] = useState(true);
+      const [syncStatus, setSyncStatus] = useState("idle"); // idle|paused|syncing|synced|offline|error
+      const [lastSynced, setLastSynced] = useState(null);
+      const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+      const addToast = useCallback((message, type = "info") => {
+        setToasts((p) => [...p, { id: Date.now() + Math.random(), message, type }]);
+      }, []);
+      const removeToast = useCallback((id) => setToasts((p) => p.filter((t) => t.id !== id)), []);
+  
+      // Theme
+      useEffect(() => {
+        if (darkMode) document.body.setAttribute("data-theme", "dark");
+        else document.body.removeAttribute("data-theme");
+      }, [darkMode]);
+  
+      // Online/offline listener
+      useEffect(() => {
+        const onOn = () => setIsOnline(true);
+        const onOff = () => setIsOnline(false);
+        window.addEventListener("online", onOn);
+        window.addEventListener("offline", onOff);
+        return () => {
+          window.removeEventListener("online", onOn);
+          window.removeEventListener("offline", onOff);
+        };
+      }, []);
+  
+      // Keep sync status consistent with online + toggle
+      useEffect(() => {
+        if (!autoSync) setSyncStatus("paused");
+        else if (!isOnline) setSyncStatus("offline");
+      }, [autoSync, isOnline]);
+  
+      // -------------------- Queue helpers --------------------
+      const readQueue = useCallback((uid) => compactQueue(safeReadJSON(userQueueKey(uid), [])), []);
+      const writeQueue = useCallback((uid, q) => safeWriteJSON(userQueueKey(uid), compactQueue(q)), []);
+  
+      const enqueueUpsert = useCallback((uid, tx) => {
+        const q = readQueue(uid);
+        q.push({ type: "upsert", tx: normalizeTx(tx), ts: Date.now() });
+        writeQueue(uid, q);
+      }, [readQueue, writeQueue]);
+  
+      const enqueueDelete = useCallback((uid, id) => {
+        const q = readQueue(uid);
+        q.push({ type: "delete", id, ts: Date.now() });
+        writeQueue(uid, q);
+      }, [readQueue, writeQueue]);
+  
+      const pendingDeleteIds = useCallback((uid) => {
+        const q = readQueue(uid);
+        const s = new Set();
+        for (const op of q) if (op.type === "delete" && op.id) s.add(op.id);
+        return s;
+      }, [readQueue]);
+  
+      // -------------------- Firestore helpers --------------------
+      const fetchCloudTransactions = useCallback(async (uid) => {
+        const snap = await window.fbStore.getDocs(
+          window.fbStore.collection(window.fbStore.db, "users", uid, "transactions")
+        );
+        const out = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          out.push(normalizeTx({ ...data, id: d.id }));
+        });
+        return sortTx(out);
+      }, []);
+  
+      const flushQueueToCloud = useCallback(async (uid) => {
+        if (!uid) return { ok: false, reason: "no-user" };
+        if (!isOnline) return { ok: false, reason: "offline" };
+        if (!autoSync) return { ok: false, reason: "paused" };
+  
+        const q = readQueue(uid);
+        if (q.length === 0) return { ok: true, flushed: 0 };
+  
+        setSyncStatus("syncing");
+  
+        try {
+          // batch max 500 ops -> chunk
+          const ops = compactQueue(q);
+          let flushed = 0;
+  
+          const chunkSize = 400;
+          for (let i = 0; i < ops.length; i += chunkSize) {
+            const chunk = ops.slice(i, i + chunkSize);
+            const batch = window.fbStore.writeBatch(window.fbStore.db);
+  
+            for (const op of chunk) {
+              if (op.type === "delete") {
+                const ref = window.fbStore.doc(window.fbStore.db, "users", uid, "transactions", op.id);
+                batch.delete(ref);
+                flushed++;
+              } else if (op.type === "upsert" && op.tx?.id) {
+                const ref = window.fbStore.doc(window.fbStore.db, "users", uid, "transactions", op.tx.id);
+                const tx = normalizeTx(op.tx);
+                batch.set(ref, tx, { merge: true });
+                flushed++;
+              }
+            }
+  
+            await batch.commit();
+          }
+  
+          // Clear queue after success
+          writeQueue(uid, []);
+          setSyncStatus("synced");
+          setLastSynced(Date.now());
+          return { ok: true, flushed };
+        } catch (e) {
+          console.error(e);
+          setSyncStatus("error");
+          return { ok: false, reason: "error", error: e };
+        }
+      }, [autoSync, isOnline, readQueue, writeQueue]);
+  
+      // -------------------- Local per-user storage --------------------
+      const loadLocal = useCallback((uid) => {
+        const local = safeReadJSON(userTxKey(uid), []);
+        if (!Array.isArray(local)) return [];
+        return sortTx(local.map(normalizeTx));
+      }, []);
+  
+      const saveLocal = useCallback((uid, txs) => {
+        safeWriteJSON(userTxKey(uid), sortTx(txs.map(normalizeTx)));
+      }, []);
+  
+      // -------------------- Bootstrap on login --------------------
+      const bootstrapUserData = useCallback(async (uid) => {
+        // 1) Load local immediately (offline-first)
+        const localTxs = loadLocal(uid);
+        setTransactions(localTxs);
+  
+        // 2) Merge with cloud if online
+        if (isOnline) {
+          try {
+            setSyncStatus(autoSync ? "syncing" : "paused");
+            const cloudTxs = await fetchCloudTransactions(uid);
+  
+            // respect pending deletes (offline delete shouldn’t “come back”)
+            const delSet = pendingDeleteIds(uid);
+  
+            const merged = mergeLocalAndCloud(localTxs, cloudTxs, delSet);
+            setTransactions(merged);
+            saveLocal(uid, merged);
+  
+            // 3) Ensure cloud catches up with local latest versions:
+            // enqueue upserts for everything in merged (safe because doc id = tx.id + updatedAt conflict resolution)
+            for (const tx of merged) enqueueUpsert(uid, tx);
+  
+            // 4) Flush queue if allowed
+            if (autoSync) await flushQueueToCloud(uid);
+  
+            setSyncStatus(autoSync ? "synced" : "paused");
+            setLastSynced(Date.now());
+          } catch (e) {
+            console.error(e);
+            setSyncStatus(isOnline ? "error" : "offline");
+          }
+        } else {
+          setSyncStatus("offline");
+        }
+      }, [autoSync, enqueueUpsert, fetchCloudTransactions, flushQueueToCloud, isOnline, loadLocal, pendingDeleteIds, saveLocal]);
+  
+      // Auth state listener
+      useEffect(() => {
+        const unsub = window.fbAuth.onAuthStateChanged(window.fbAuth.auth, async (u) => {
+          setUser(u || null);
+          setLoginError("");
+          setAuthLoading(false);
+  
+          if (u?.uid) {
+            await bootstrapUserData(u.uid);
+          } else {
+            setTransactions([]);
+            setSyncStatus("idle");
+            setLastSynced(null);
+          }
+        });
+        return unsub;
+      }, [bootstrapUserData]);
+  
+      // When coming online, auto-flush queue
+      useEffect(() => {
+        if (!user?.uid) return;
+        if (!isOnline) return;
+        if (!autoSync) return;
+  
+        (async () => {
+          const res = await flushQueueToCloud(user.uid);
+          if (res.ok && res.flushed > 0) addToast(`Synced ${res.flushed} changes`, "success");
+        })();
+      }, [user?.uid, isOnline, autoSync, flushQueueToCloud, addToast]);
+  
+      // -------------------- Auth actions --------------------
+      const handleLogin = async (email, password, isSignUp) => {
+        setLoginLoading(true);
+        setLoginError("");
+        try {
+          if (isSignUp) {
+            await window.fbAuth.createUserWithEmailAndPassword(window.fbAuth.auth, email, password);
+            addToast("Account created!", "success");
+          } else {
+            await window.fbAuth.signInWithEmailAndPassword(window.fbAuth.auth, email, password);
+            addToast("Signed in!", "success");
+          }
+        } catch (e) {
+          const msg = String(e?.message || "Login failed").replace(/^Firebase:\s*/i, "");
+          setLoginError(msg);
+          addToast(msg, "error");
+        } finally {
+          setLoginLoading(false);
+        }
+      };
+  
+      const handleResetPassword = async (email) => {
+        setLoginLoading(true);
+        setLoginError("");
+        try {
+          await window.fbAuth.sendPasswordResetEmail(window.fbAuth.auth, email);
+          addToast("Password reset email sent!", "success");
+        } catch (e) {
+          const msg = String(e?.message || "Reset failed").replace(/^Firebase:\s*/i, "");
+          setLoginError(msg);
+          addToast(msg, "error");
+        } finally {
+          setLoginLoading(false);
+        }
+      };
+  
+      const handleLogout = async () => {
+        try {
+          await window.fbAuth.signOut(window.fbAuth.auth);
+          addToast("Logged out", "info");
+        } catch (e) {
+          addToast("Logout failed", "error");
+        }
+      };
+  
+      // -------------------- Transaction actions --------------------
+      const addTransaction = (tx) => {
+        if (!user?.uid) return;
+  
+        // Duplicate protection
+        const key = expenseKey(tx);
+        const existingKeys = new Set(transactions.map(expenseKey));
+        if (existingKeys.has(key)) {
+          addToast("Duplicate blocked (same type/amount/category/date/description/notes).", "error");
+          return;
+        }
+  
+        const clean = normalizeTx(tx);
+        const next = sortTx([{ ...clean, __pending: !isOnline || !autoSync }, ...transactions]);
+        setTransactions(next);
+        saveLocal(user.uid, next);
+  
+        enqueueUpsert(user.uid, clean);
+  
+        if (isOnline && autoSync) {
+          flushQueueToCloud(user.uid).catch(() => {});
+        } else {
+          setSyncStatus(!autoSync ? "paused" : "offline");
+        }
+      };
+  
+      const saveEdit = (tx) => {
+        if (!user?.uid) return;
+        const clean = normalizeTx({ ...tx, updatedAt: Date.now() });
+  
+        const next = sortTx(
+          transactions.map((t) => (t.id === clean.id ? { ...clean, __pending: !isOnline || !autoSync } : t))
+        );
+        setTransactions(next);
+        saveLocal(user.uid, next);
+  
+        enqueueUpsert(user.uid, clean);
+        setEditingTx(null);
+  
+        if (isOnline && autoSync) {
+          flushQueueToCloud(user.uid).catch(() => {});
+        } else {
+          setSyncStatus(!autoSync ? "paused" : "offline");
+        }
+        addToast("Updated", "success");
+      };
+  
+      const confirmDelete = () => {
+        if (!user?.uid || !deleteTx) return;
+  
+        const id = deleteTx.id;
+        const next = transactions.filter((t) => t.id !== id);
+        setTransactions(next);
+        saveLocal(user.uid, next);
+  
+        enqueueDelete(user.uid, id);
+  
+        setDeleteTx(null);
+        addToast("Deleted", "info");
+  
+        if (isOnline && autoSync) {
+          flushQueueToCloud(user.uid).catch(() => {});
+        } else {
+          setSyncStatus(!autoSync ? "paused" : "offline");
+        }
+      };
+  
+      // -------------------- Import/Replace --------------------
+      const importMerge = (importedRaw) => {
+        if (!user?.uid) return;
+  
+        const imported = importedRaw.map(normalizeTx);
+  
+        const existingKeySet = new Set(transactions.map(expenseKey));
+        const toAdd = [];
+        let skipped = 0;
+  
+        for (const tx of imported) {
+          const k = expenseKey(tx);
+          if (existingKeySet.has(k)) {
+            skipped++;
+            continue;
+          }
+          existingKeySet.add(k);
+          toAdd.push({ ...tx, __pending: !isOnline || !autoSync });
+        }
+  
+        const next = sortTx([...toAdd, ...transactions]);
+        setTransactions(next);
+        saveLocal(user.uid, next);
+  
+        for (const tx of toAdd) enqueueUpsert(user.uid, tx);
+  
+        if (isOnline && autoSync) flushQueueToCloud(user.uid).catch(() => {});
+        addToast(`Imported. Added ${toAdd.length}, skipped ${skipped} duplicates.`, "success");
+      };
+  
+      const importReplace = (importedRaw) => {
+        if (!user?.uid) return;
+  
+        if (!confirm("Replace will overwrite your current data (locally + next sync will update cloud). Continue?")) return;
+  
+        const imported = sortTx(importedRaw.map(normalizeTx).map((t) => ({ ...t, __pending: !isOnline || !autoSync })));
+  
+        // Queue deletes for anything currently present but not in imported
+        const importedIds = new Set(imported.map((t) => t.id));
+        for (const t of transactions) {
+          if (!importedIds.has(t.id)) enqueueDelete(user.uid, t.id);
+        }
+  
+        setTransactions(imported);
+        saveLocal(user.uid, imported);
+  
+        // Upsert all imported
+        for (const t of imported) enqueueUpsert(user.uid, t);
+  
+        if (isOnline && autoSync) flushQueueToCloud(user.uid).catch(() => {});
+        addToast(`Replaced with ${imported.length} transactions.`, "success");
+      };
+  
+      // -------------------- Manual sync --------------------
+      const manualSync = async () => {
+        if (!user?.uid) return;
+        if (!isOnline) {
+          addToast("You are offline. Sync will resume when online.", "error");
+          setSyncStatus("offline");
+          return;
+        }
+  
+        if (!autoSync) setSyncStatus("paused");
+        setSyncStatus("syncing");
+  
+        const res = await flushQueueToCloud(user.uid);
+        if (!res.ok) {
+          addToast("Sync failed. Check console + Firestore rules.", "error");
+          setSyncStatus("error");
+          return;
+        }
+  
+        // Refresh from cloud after flushing
+        try {
+          const cloudTxs = await fetchCloudTransactions(user.uid);
+          const delSet = pendingDeleteIds(user.uid);
+          const merged = mergeLocalAndCloud(loadLocal(user.uid), cloudTxs, delSet);
+          setTransactions(merged);
+          saveLocal(user.uid, merged);
+        } catch (e) {
+          console.error(e);
+        }
+  
+        addToast("Synced!", "success");
+        setSyncStatus("synced");
+        setLastSynced(Date.now());
+      };
+  
+      // -------------------- Render --------------------
+      if (authLoading) {
+        return (
+          <div className="loading-page">
+            <div className="loading-content">
+              <div className="loading-logo">💰</div>
+              <div className="loading-spinner-large"></div>
+              <h2>Loading...</h2>
+            </div>
+          </div>
+        );
+      }
+  
+      if (!user) {
+        return (
+          <LoginPage
+            onLogin={handleLogin}
+            onResetPassword={handleResetPassword}
+            isLoading={loginLoading}
+            error={loginError}
+          />
+        );
+      }
+  
+      const effectiveStatus = !autoSync ? "paused" : !isOnline ? "offline" : syncStatus;
+  
+      return (
+        <div className="app">
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
+  
+          <header className="header">
+            <div className="header-content">
+              <h1>💰 Expense Tracker</h1>
+  
+              <div className="header-right">
+                <SyncStatusIndicator status={effectiveStatus} lastSynced={lastSynced} />
+  
+                <button
+                  className={`sync-toggle-btn ${autoSync ? "active" : ""}`}
+                  onClick={() => setAutoSync((v) => !v)}
+                  title={autoSync ? "Auto-sync ON" : "Auto-sync OFF"}
+                >
+                  {autoSync ? "🔄 Auto" : "⏸️ Manual"}
+                </button>
+  
+                <button className="btn-icon" onClick={manualSync} title="Sync now">
+                  ☁️
+                </button>
+  
+                <button className="theme-toggle" onClick={() => setDarkMode((v) => !v)} title="Toggle theme">
+                  {darkMode ? "☀️" : "🌙"}
+                </button>
+  
+                <span className="user-email">{user.email}</span>
+  
+                <button className="logout-btn" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </header>
+  
+          <main className="container">
+            <BalanceCards transactions={transactions} />
+  
+            <div className="main-grid">
+              <div>
+                <TransactionForm onAdd={addTransaction} />
+              </div>
+  
+              <div className="card">
+                <div className="card-header">
+                  <h2>📋 Transactions</h2>
+                </div>
+                <div className="card-body">
+                  <FilterBar filters={filters} setFilters={setFilters} transactions={transactions} />
+                  <TransactionList
+                    transactions={transactions}
+                    filters={filters}
+                    onEdit={(t) => setEditingTx(t)}
+                    onDelete={(t) => setDeleteTx(t)}
+                  />
+                </div>
+              </div>
+            </div>
+  
+            <div style={{ marginTop: 20 }}>
+              <DataManagement
+                transactions={transactions}
+                onImportTransactions={importMerge}
+                onReplaceTransactions={importReplace}
+                addToast={addToast}
+              />
+            </div>
+            {/* ADD ANALYSIS SECTION HERE */}
+//          <AnalysisSection transactions={transactions} />
+  
+            <div className="footer">
+              <p>{isOnline ? "🟢 Online" : "🔴 Offline"} • Your data is saved locally and synced to cloud when possible.</p>
+            </div>
+          </main>
+  
+          {editingTx && (
+            <EditModal
+              tx={editingTx}
+              onSave={saveEdit}
+              onClose={() => setEditingTx(null)}
+            />
+          )}
+  
+          {deleteTx && (
+            <DeleteModal
+              onConfirm={confirmDelete}
+              onClose={() => setDeleteTx(null)}
+            />
+          )}
+        </div>
+      );
+    };
+  
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+
+  </body>
+</html> 
