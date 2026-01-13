@@ -2154,16 +2154,16 @@
         ))}
       </div>
     );
-    const ImportLoadingOverlay = ({ isVisible, message, progress }) => {
+    const ImportLoadingOverlay = ({ isVisible, title, message, progress }) => {
       if (!isVisible) return null;
 
       return (
         <div className="import-loading-overlay">
           <div className="import-loading-content">
             <div className="import-loading-spinner"></div>
-            <h3>Processing Import</h3>
-            <p>{message || "Please wait while we process your data..."}</p>
-            {progress !== undefined && (
+            <h3>{title || "⏳ Processing"}</h3>
+            <p>{message || "Please wait..."}</p>
+            {progress !== undefined && progress > 0 && (
               <div className="import-progress">
                 <div
                   className="import-progress-bar"
@@ -2947,7 +2947,8 @@
       importProgress,
       setImportProgress,
       importMessage,
-      setImportMessage
+      setImportMessage,
+      setProcessingTitle
     }) => {
       const [showImportModal, setShowImportModal] = useState(false);
       const [importMode, setImportMode] = useState("merge");
@@ -3031,6 +3032,7 @@
         if (!Array.isArray(pendingData)) return;
 
         setShowImportModal(false);
+        setProcessingTitle("📤 Importing Data");
         setIsImporting(true);
         setImportProgress(0);
         setImportMessage("Preparing import...");
@@ -3178,9 +3180,43 @@
                     </button>
                     <button
                       className="btn btn-danger"
-                      onClick={() => {
-                        onClearAll();
+                      onClick={async () => {
                         setShowClearConfirm(false);
+                        setProcessingTitle("🗑️ Deleting All Data");
+                        setImportMessage("Preparing to delete...");
+                        setImportProgress(0);
+                        setIsImporting(true);
+
+                        await new Promise(resolve => setTimeout(resolve, 100));
+
+                        try {
+                          const totalItems = transactions.length;
+                          const CHUNK_SIZE = 50;
+
+                          for (let i = 0; i < totalItems; i += CHUNK_SIZE) {
+                            const progress = Math.round((i / totalItems) * 80);
+                            setImportProgress(progress);
+                            setImportMessage(`Deleting ${Math.min(i + CHUNK_SIZE, totalItems)} of ${totalItems} transactions...`);
+                            await new Promise(resolve => setTimeout(resolve, 10));
+                          }
+
+                          setImportProgress(90);
+                          setImportMessage("Finalizing deletion...");
+                          await new Promise(resolve => setTimeout(resolve, 100));
+
+                          onClearAll();
+
+                          setImportProgress(100);
+                          setImportMessage("All transactions deleted!");
+                          await new Promise(resolve => setTimeout(resolve, 500));
+
+                        } catch (error) {
+                          addToast("Delete failed: " + (error.message || "Unknown error"), "error");
+                        } finally {
+                          setIsImporting(false);
+                          setImportProgress(0);
+                          setImportMessage("");
+                        }
                       }}
                     >
                       🗑️ Yes, Clear All
@@ -4128,6 +4164,7 @@
       const [isImporting, setIsImporting] = useState(false);
       const [importProgress, setImportProgress] = useState(0);
       const [importMessage, setImportMessage] = useState("");
+      const [processingTitle, setProcessingTitle] = useState("Processing");
       // Custom categories state
       const [customCategories, setCustomCategories] = useState([]);
 
@@ -4631,6 +4668,7 @@
           <ToastContainer toasts={toasts} removeToast={removeToast} />
           <ImportLoadingOverlay
             isVisible={isImporting}
+            title={processingTitle}
             message={importMessage}
             progress={importProgress}
           />
@@ -4705,6 +4743,7 @@
                 setImportProgress={setImportProgress}
                 importMessage={importMessage}
                 setImportMessage={setImportMessage}
+                setProcessingTitle={setProcessingTitle}
               />
             </div>
             {/* Category Manager */}
